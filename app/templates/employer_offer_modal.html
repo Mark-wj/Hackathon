@@ -1,0 +1,149 @@
+<!-- Add this modal to employer.html -->
+<div id="offerLetterModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeOfferModal()">&times;</span>
+        <h2>Send Offer Letter</h2>
+        <div id="offerOptions">
+            <button onclick="showGenerateOffer()">Generate Offer Letter</button>
+            <button onclick="showUploadOffer()">Upload Custom Document</button>
+        </div>
+        
+        <div id="generateOfferForm" style="display: none;">
+            <h3>Generate Offer Letter</h3>
+            <textarea id="offerContent" rows="10" placeholder="Enter custom offer letter content (optional)"></textarea>
+            <button onclick="generateAndSendOffer()">Generate & Send</button>
+        </div>
+        
+        <div id="uploadOfferForm" style="display: none;">
+            <h3>Upload Custom Document</h3>
+            <input type="file" id="offerDocument" accept=".pdf,.doc,.docx">
+            <button onclick="uploadAndSendOffer()">Upload & Send</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentApplicationId = null;
+
+function sendOfferLetter(applicationId) {
+    currentApplicationId = applicationId;
+    document.getElementById('offerLetterModal').style.display = 'block';
+}
+
+function closeOfferModal() {
+    document.getElementById('offerLetterModal').style.display = 'none';
+    document.getElementById('offerOptions').style.display = 'block';
+    document.getElementById('generateOfferForm').style.display = 'none';
+    document.getElementById('uploadOfferForm').style.display = 'none';
+}
+
+function showGenerateOffer() {
+    document.getElementById('offerOptions').style.display = 'none';
+    document.getElementById('generateOfferForm').style.display = 'block';
+}
+
+function showUploadOffer() {
+    document.getElementById('offerOptions').style.display = 'none';
+    document.getElementById('uploadOfferForm').style.display = 'block';
+}
+
+async function generateAndSendOffer() {
+    const customContent = document.getElementById('offerContent').value;
+    
+    try {
+        const response = await fetch(`${API_BASE}/applications/${currentApplicationId}/status`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                status: 'accepted',
+                custom_offer_letter: customContent || null
+            })
+        });
+        
+        if (response.ok) {
+            alert('Offer letter sent successfully!');
+            closeOfferModal();
+            loadApplications();
+        }
+    } catch (error) {
+        alert('Error sending offer letter');
+    }
+}
+
+async function uploadAndSendOffer() {
+    const fileInput = document.getElementById('offerDocument');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a document');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('document', file);
+    formData.append('application_id', currentApplicationId);
+    
+    try {
+        const response = await fetch(`${API_BASE}/applications/upload-offer-document`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: formData
+        });
+        
+        if (response.ok) {
+            // Also update status to accepted
+            await fetch(`${API_BASE}/applications/${currentApplicationId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: 'accepted' })
+            });
+            
+            alert('Offer document sent successfully!');
+            closeOfferModal();
+            loadApplications();
+        }
+    } catch (error) {
+        alert('Error uploading document');
+    }
+}
+
+// Update the displayApplications function to include offer letter button
+function displayApplicationsWithOffer(applications) {
+    const appsList = document.getElementById('applicationsList');
+    
+    if (applications.length === 0) {
+        appsList.innerHTML = '<p>No applications yet.</p>';
+        return;
+    }
+    
+    appsList.innerHTML = applications.map(app => `
+        <div class="application-card">
+            <div>
+                <h4>${app.applicant.name}</h4>
+                <p>${app.applicant.email}</p>
+                <p>Match Score: ${app.match_score ? app.match_score.toFixed(1) + '%' : 'N/A'}</p>
+                <p>Applied: ${new Date(app.applied_at).toLocaleDateString()}</p>
+            </div>
+            <div>
+                <span class="status-badge status-${app.status}">${app.status}</span>
+                <select onchange="updateApplicationStatus(${app.id}, this.value)">
+                    <option value="">Change status...</option>
+                    <option value="reviewing">Reviewing</option>
+                    <option value="shortlisted">Shortlisted</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+                ${app.status === 'shortlisted' ? 
+                    `<button onclick="sendOfferLetter(${app.id})">Send Offer</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+</script>

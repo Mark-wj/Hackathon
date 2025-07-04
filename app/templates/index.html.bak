@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Job Matching Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .job-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .match-score {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .skill-tag {
+            background-color: #ecf0f1;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+        }
+        .tab-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>AI-Powered Job Matching Platform</h1>
+            <p>Find your perfect job match using AI</p>
+        </div>
+
+        <div id="message"></div>
+
+        <!-- Login/Register Section -->
+        <div id="authSection" class="section">
+            <div class="tab-container">
+                <div class="tab active" onclick="showTab('login')">Login</div>
+                <div class="tab" onclick="showTab('register')">Register</div>
+            </div>
+
+            <div id="loginTab" class="tab-content active">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="loginEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+
+            <div id="registerTab" class="tab-content">
+                <h2>Register</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label>Email:</label>
+                        <input type="email" id="registerEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Password:</label>
+                        <input type="password" id="registerPassword" required>
+                    </div>
+                    <div class="form-group">
+                        <label>First Name:</label>
+                        <input type="text" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name:</label>
+                        <input type="text" id="lastName" required>
+                    </div>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main App Section (hidden until logged in) -->
+        <div id="appSection" style="display: none;">
+            <div class="section">
+                <h2>Welcome, <span id="userName"></span>!</h2>
+                <button onclick="logout()">Logout</button>
+            </div>
+
+            <div class="tab-container">
+                <div class="tab active" onclick="showAppTab('profile')">Profile</div>
+                <div class="tab" onclick="showAppTab('jobs')">Browse Jobs</div>
+                <div class="tab" onclick="showAppTab('matches')">AI Matches</div>
+                <div class="tab" onclick="showAppTab('applications')">My Applications</div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profileTab" class="tab-content active">
+                <div class="section">
+                    <h2>My Profile</h2>
+                    <form id="profileForm">
+                        <div class="form-group">
+                            <label>Phone:</label>
+                            <input type="tel" id="phone">
+                        </div>
+                        <div class="form-group">
+                            <label>Location:</label>
+                            <input type="text" id="location" placeholder="e.g., Nairobi, Kenya">
+                        </div>
+                        <div class="form-group">
+                            <label>Professional Summary:</label>
+                            <textarea id="summary" rows="3"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Skills (comma separated):</label>
+                            <input type="text" id="skills" placeholder="e.g., python, flask, postgresql">
+                        </div>
+                        <div class="form-group">
+                            <label>Years of Experience:</label>
+                            <input type="number" id="experienceYears" min="0" max="50">
+                        </div>
+                        <button type="submit">Update Profile</button>
+                    </form>
+                    <hr style="margin: 20px 0;">
+                    <button onclick="analyzeProfile()">Analyze My Profile</button>
+                    <div id="profileAnalysis"></div>
+                </div>
+            </div>
+
+            <!-- Jobs Tab -->
+            <div id="jobsTab" class="tab-content">
+                <div class="section">
+                    <h2>Browse Jobs</h2>
+                    <div class="form-group">
+                        <input type="text" id="searchQuery" placeholder="Search jobs...">
+                        <button onclick="searchJobs()">Search</button>
+                    </div>
+                    <div id="jobsList"></div>
+                </div>
+            </div>
+
+            <!-- Matches Tab -->
+            <div id="matchesTab" class="tab-content">
+                <div class="section">
+                    <h2>AI Job Matches</h2>
+                    <button onclick="findMatches()">Find My Best Matches</button>
+                    <div id="matchesList"></div>
+                </div>
+            </div>
+
+            <!-- Applications Tab -->
+            <div id="applicationsTab" class="tab-content">
+                <div class="section">
+                    <h2>My Applications</h2>
+                    <button onclick="loadApplications()">Refresh</button>
+                    <div id="applicationsList"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Job Matching Platform</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background-color: #f5f5f5; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #e74c3c; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .stat-card h3 { color: #7f8c8d; font-size: 14px; margin-bottom: 10px; }
+        .stat-card .number { font-size: 32px; font-weight: bold; color: #2c3e50; }
+        .section { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; }
+        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab.active { color: #e74c3c; border-bottom-color: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f8f9fa; }
+        button { background-color: #e74c3c; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #c0392b; }
+        .action-buttons { display: flex; gap: 10px; }
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px; }
+        .status-active { color: #27ae60; }
+        .status-inactive { color: #e74c3c; }
+        .chart-container { height: 300px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Admin Dashboard</h1>
+            <p>System Administrator | <a href="#" onclick="logout()" style="color: white;">Logout</a></p>
+        </div>
+
+        <!-- Statistics Dashboard -->
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <h3>Total Users</h3>
+                <div class="number" id="totalUsers">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Active Jobs</h3>
+                <div class="number" id="activeJobs">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Applications</h3>
+                <div class="number" id="totalApplications">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Companies</h3>
+                <div class="number" id="totalCompanies">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Success Rate</h3>
+                <div class="number" id="successRate">0%</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="section">
+            <div class="tab-container">
+                <div class="tab active" onclick="showTab('users')">Users</div>
+                <div class="tab" onclick="showTab('jobs')">Jobs</div>
+                <div class="tab" onclick="showTab('analytics')">Analytics</div>
+                <div class="tab" onclick="showTab('system')">System</div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content">
+                <div class="search-bar">
+                    <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
+                    <select id="roleFilter" onchange="filterUsers()">
+                        <option value="">All Roles</option>
+                        <option value="job_seeker">Job Seekers</option>
+                        <option value="employer">Employers</option>
+                        <option value="admin">Admins</option>
+                    </select>
+                </div>
+                <table id="usersTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Joined</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Jobs Tab -->
+            <div id="jobsTab" class="tab-content" style="display: none;">
+                <div class="search-bar">
+                    <input type="text" id="jobSearch" placeholder="Search jobs..." onkeyup="searchJobs()">
+                    <select id="statusFilter" onchange="filterJobs()">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+                <table id="jobsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Company</th>
+                            <th>Posted By</th>
+                            <th>Applications</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="jobsTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Analytics Tab -->
+            <div id="analyticsTab" class="tab-content" style="display: none;">
+                <h3>Platform Analytics</h3>
+                <div id="analyticsContent">
+                    <div class="dashboard-grid" style="margin-top: 20px;">
+                        <div class="chart-container" id="userGrowthChart"></div>
+                        <div class="chart-container" id="applicationTrendsChart"></div>
+                    </div>
+                    <h4 style="margin-top: 30px;">Top Skills in Demand</h4>
+                    <div id="topSkillsList"></div>
+                </div>
+            </div>
+
+            <!-- System Tab -->
+            <div id="systemTab" class="tab-content" style="display: none;">
+                <h3>System Configuration</h3>
+                <div id="systemConfig">
+                    <p><strong>Max File Size:</strong> 16MB</p>
+                    <p><strong>Allowed File Types:</strong> PDF, DOC, DOCX, TXT</p>
+                    <p><strong>Rate Limits:</strong> 200 per day, 50 per hour</p>
+                    <h4 style="margin-top: 20px;">AI Models Status</h4>
+                    <p>Resume Parser: <span class="status-active">Active</span></p>
+                    <p>Job Matcher: <span class="status-active">Active</span></p>
+                    <p>Content Generator: <span class="status-active">Active</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = localStorage.getItem('authToken');
+        let allUsers = [];
+        let allJobs = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkAuth();
+            loadDashboard();
+        });
+
+        async function checkAuth() {
+            try {
+                const response = await fetch(`${API_BASE}/users/profile`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.role !== 'admin') {
+                        window.location.href = '/';
+                        return;
+                    }
+                } else {
+                    window.location.href = '/';
+                }
+            } catch (error) {
+                window.location.href = '/';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('authToken');
+            window.location.href = '/';
+        }
+
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalUsers').textContent = data.statistics.users.total;
+                    document.getElementById('activeJobs').textContent = data.statistics.jobs.active;
+                    document.getElementById('totalApplications').textContent = data.statistics.applications.total;
+                    document.getElementById('totalCompanies').textContent = data.statistics.companies.total;
+                    
+                    // Load initial data
+                    loadUsers();
+                }
+            } catch (error) {
+                console.error('Dashboard error:', error);
+            }
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            
+            const tabIndex = ['users', 'jobs', 'analytics', 'system'].indexOf(tabName);
+            document.querySelectorAll('.tab')[tabIndex].classList.add('active');
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            
+            if (tabName === 'users') {
+                loadUsers();
+            } else if (tabName === 'jobs') {
+                loadJobs();
+            } else if (tabName === 'analytics') {
+                loadAnalytics();
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/users`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    allUsers = data.users;
+                    displayUsers(allUsers);
+                }
+            } catch (error) {
+                console.error('Load users error:', error);
+            }
+        }
+
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.id}</td>
+                    <td>${user.email}</td>
+                    <td>${user.first_name || ''} ${user.last_name || ''}</td>
+                    <td>${user.role}</td>
+                    <td class="${user.is_active ? 'status-active' : 'status-inactive'}">
+                        ${user.is_active ? 'Active' : 'Inactive'}
+                    </td>
+                    <td>${new Date(user.created_at).toLocaleDateString()}</td>
+                    <td class="action-buttons">
+                        <button onclick="toggleUserStatus(${user.id}, ${user.is_active})">
+                            ${user.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        ${user.role === 'job_seeker' ? 
+                            `<button onclick="makeEmployer(${user.id})">Make Employer</button>` : ''}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function toggleUserStatus(userId, currentStatus) {
+            try {
+                const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_active: !currentStatus })
+                });
+                
+                if (response.ok) {
+                    loadUsers();
+                }
+            } catch (error) {
+                alert('Error updating user status');
+            }
+        }
+
+        async function makeEmployer(userId) {
+            if (confirm('Make this user an employer?')) {
+                try {
+                    const response = await fetch(`${API_BASE}/admin/users/${userId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${authToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ role: 'employer' })
+                    });
+                    
+                    if (response.ok) {
+                        loadUsers();
+                    }
+                } catch (error) {
+                    alert('Error updating user role');
+                }
+            }
+        }
+
+        async function loadJobs() {
+            try {
+                const response = await fetch(`${API_BASE}/admin/jobs`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    allJobs = data.jobs;
+                    displayJobs(allJobs);
+                }
+            } catch (error) {
+                console.error('Load jobs error:', error);
+            }
+        }
+
+        function displayJobs(jobs) {
+            const tbody = document.getElementById('jobsTableBody');
+            
+            tbody.innerHTML = jobs.map(job => `
+                <tr>
+                    <td>${job.id}</td>
+                    <td>${job.title}</td>
+                    <td>${job.company ? job.company.name : 'N/A'}</td>
+                    <td>${job.posted_by_email || 'N/A'}</td>
+                    <td>${job.application_count}</td>
+                    <td class="${job.is_active ? 'status-active' : 'status-inactive'}">
+
+cat >> app/templates/admin.html << 'EOF'
+                       ${job.is_active ? 'Active' : 'Inactive'}
+                   </td>
+                   <td class="action-buttons">
+                       <button onclick="moderateJob(${job.id}, '${job.is_active ? 'deactivate' : 'approve'}')">
+                           ${job.is_active ? 'Deactivate' : 'Activate'}
+                       </button>
+                   </td>
+               </tr>
+           `).join('');
+       }
+
+       async function moderateJob(jobId, action) {
+           try {
+               const response = await fetch(`${API_BASE}/admin/jobs/${jobId}/moderate`, {
+                   method: 'PUT',
+                   headers: {
+                       'Authorization': `Bearer ${authToken}`,
+                       'Content-Type': 'application/json'
+                   },
+                   body: JSON.stringify({ action: action })
+               });
+               
+               if (response.ok) {
+                   loadJobs();
+               }
+           } catch (error) {
+               alert('Error moderating job');
+           }
+       }
+
+       async function loadAnalytics() {
+           try {
+               const response = await fetch(`${API_BASE}/admin/analytics?days=30`, {
+                   headers: { 'Authorization': `Bearer ${authToken}` }
+               });
+               
+               if (response.ok) {
+                   const data = await response.json();
+                   displayAnalytics(data);
+               }
+           } catch (error) {
+               console.error('Load analytics error:', error);
+           }
+       }
+
+       function displayAnalytics(data) {
+           // Display success metrics
+           if (data.success_metrics) {
+               document.getElementById('successRate').textContent = 
+                   data.success_metrics.success_rate.toFixed(1) + '%';
+           }
+           
+           // Display top skills
+           const topSkillsList = document.getElementById('topSkillsList');
+           topSkillsList.innerHTML = (data.top_skills || []).slice(0, 10).map(skill => `
+               <p><strong>${skill.skill}:</strong> ${skill.count} jobs</p>
+           `).join('');
+           
+           // You can add chart libraries here to visualize the data
+           // For now, we'll just show the data as text
+           const userGrowthChart = document.getElementById('userGrowthChart');
+           userGrowthChart.innerHTML = '<h4>User Growth (Last 30 days)</h4>' +
+               '<p>New users per day data available in API response</p>';
+           
+           const applicationTrendsChart = document.getElementById('applicationTrendsChart');
+           applicationTrendsChart.innerHTML = '<h4>Application Trends</h4>' +
+               '<p>Applications per day data available in API response</p>';
+       }
+
+       function searchUsers() {
+           const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+           const filtered = allUsers.filter(user => 
+               user.email.toLowerCase().includes(searchTerm) ||
+               (user.first_name && user.first_name.toLowerCase().includes(searchTerm)) ||
+               (user.last_name && user.last_name.toLowerCase().includes(searchTerm))
+           );
+           displayUsers(filtered);
+       }
+
+       function filterUsers() {
+           const role = document.getElementById('roleFilter').value;
+           const filtered = role ? allUsers.filter(user => user.role === role) : allUsers;
+           displayUsers(filtered);
+       }
+
+       function searchJobs() {
+           const searchTerm = document.getElementById('jobSearch').value.toLowerCase();
+           const filtered = allJobs.filter(job => 
+               job.title.toLowerCase().includes(searchTerm) ||
+               (job.company && job.company.name.toLowerCase().includes(searchTerm))
+           );
+           displayJobs(filtered);
+       }
+
+       function filterJobs() {
+           const status = document.getElementById('statusFilter').value;
+           let filtered = allJobs;
+           
+           if (status === 'active') {
+               filtered = allJobs.filter(job => job.is_active);
+           } else if (status === 'inactive') {
+               filtered = allJobs.filter(job => !job.is_active);
+           }
+           
+           displayJobs(filtered);
+       }
+   </script>
+</body>
+</html>
