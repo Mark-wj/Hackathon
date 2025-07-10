@@ -1,10 +1,60 @@
 import os
+import pickle
 from app import db
 from app.models.job import Job
 from app.models.application import MatchHistory
 
-def calculate_match_score(user_profile, job):
-    """Calculate match score between user and job"""
+# Load the actual AI models
+def load_ai_models():
+    """Load the trained AI models"""
+    models = {}
+    model_dir = 'ai_models/saved'
+    
+    try:
+        # Load JobMatcher
+        matcher_path = os.path.join(model_dir, 'job_matcher.pkl')
+        if os.path.exists(matcher_path):
+            with open(matcher_path, 'rb') as f:
+                models['job_matcher'] = pickle.load(f)
+        
+        # Load SkillExtractor
+        skill_path = os.path.join(model_dir, 'skill_extractor.pkl')
+        if os.path.exists(skill_path):
+            with open(skill_path, 'rb') as f:
+                models['skill_extractor'] = pickle.load(f)
+        
+        print(f"✅ Loaded AI models: {list(models.keys())}")
+        return models
+    except Exception as e:
+        print(f"❌ Error loading AI models: {str(e)}")
+        return {}
+
+# Global models instance
+AI_MODELS = load_ai_models()
+
+def get_job_matcher():
+    """Get the AI job matcher or fallback to basic logic"""
+    return AI_MODELS.get('job_matcher')
+
+def calculate_match_score_ai(user_profile, job):
+    """Calculate match score using AI model"""
+    matcher = get_job_matcher()
+    
+    if matcher:
+        # Use the actual AI model
+        try:
+            scores = matcher.calculate_match_score(user_profile, job)
+            return scores
+        except Exception as e:
+            print(f"❌ AI matcher error: {str(e)}")
+            # Fall back to basic logic
+            return calculate_match_score_basic(user_profile, job)
+    else:
+        # Use basic logic if AI model not available
+        return calculate_match_score_basic(user_profile, job)
+
+def calculate_match_score_basic(user_profile, job):
+    """Fallback basic match calculation"""
     scores = {}
     
     # Skill matching - case insensitive
@@ -32,21 +82,20 @@ def calculate_match_score(user_profile, job):
     
     scores['experience_match'] = exp_match * 100
     
-    # Location matching - case insensitive
+    # Location matching
     user_location = user_profile.get('location', '').lower()
     job_location = job.get('location', '').lower()
     
     if job.get('is_remote') or user_location == job_location:
         location_match = 1.0
     elif user_location and job_location:
-        # Check if any part of user location is in job location
         location_match = 0.8 if any(word in job_location for word in user_location.split()) else 0.3
     else:
         location_match = 0.3
     
     scores['location_match'] = location_match * 100
     
-    # Overall score (weighted average)
+    # Overall score
     overall_score = (
         scores['skill_match'] * 0.5 +
         scores['experience_match'] * 0.3 +
@@ -54,11 +103,10 @@ def calculate_match_score(user_profile, job):
     )
     
     scores['overall'] = overall_score
-    
     return scores
 
 def match_user_to_jobs(user, jobs):
-    """Match user to multiple jobs"""
+    """Match user to multiple jobs using AI"""
     if not user.profile:
         return []
     
@@ -66,29 +114,38 @@ def match_user_to_jobs(user, jobs):
     results = []
     
     for job in jobs:
-        scores = calculate_match_score(user_profile, job.to_dict())
+        job_dict = job.to_dict()
+        scores = calculate_match_score_ai(user_profile, job_dict)
         
         # Save match history
-        match_history = MatchHistory(
-            user_id=user.id,
-            job_id=job.id,
-            match_score=scores['overall'],
-            skill_match_score=scores['skill_match'],
-            experience_match_score=scores['experience_match'],
-            location_match_score=scores['location_match']
-        )
-        db.session.add(match_history)
+        try:
+            match_history = MatchHistory(
+                user_id=user.id,
+                job_id=job.id,
+                match_score=scores['overall'],
+                skill_match_score=scores['skill_match'],
+                experience_match_score=scores['experience_match'],
+                location_match_score=scores['location_match']
+            )
+            db.session.add(match_history)
+        except Exception as e:
+            print(f"❌ Error saving match history: {str(e)}")
         
         results.append({
-            'job': job.to_dict(),
+            'job': job_dict,
             'scores': scores
         })
     
-    db.session.commit()
+    try:
+        db.session.commit()
+    except Exception as e:
+        print(f"❌ Error committing match history: {str(e)}")
+        db.session.rollback()
+    
     return results
 
 def find_best_matches(user, location=None, job_type=None, min_score=50):
-    """Find best job matches for user"""
+    """Find best job matches for user using AI"""
     # Get active jobs
     query = Job.query.filter_by(is_active=True)
     
@@ -99,22 +156,27 @@ def find_best_matches(user, location=None, job_type=None, min_score=50):
         query = query.filter_by(job_type=job_type)
     
     jobs = query.all()
+    print(f"📊 Found {len(jobs)} active jobs to match against")
     
-    # Get matches
+    # Get matches using AI
     matches = match_user_to_jobs(user, jobs)
+    print(f"🎯 Generated {len(matches)} job matches")
     
     # Filter by minimum score
     filtered_matches = [m for m in matches if m['scores']['overall'] >= min_score]
+    print(f"✅ {len(filtered_matches)} matches above {min_score}% threshold")
     
-    # Sort by score
+    # Sort by score (highest first)
     filtered_matches.sort(key=lambda x: x['scores']['overall'], reverse=True)
     
     return filtered_matches
 
-# Try to load the AI model, but fall back to the simple implementation
-try:
-    from ai_models.train_models import JobMatcher
-    model_path = os.environ.get('JOB_MATCHER_MODEL_PATH', 'ai_models/saved/job_matcher.pkl')
-    job_matcher = JobMatcher.load(model_path) if os.path.exists(model_path) else None
-except:
-    job_matcher = None
+def reload_ai_models():
+    """Reload AI models (useful for updates)"""
+    global AI_MODELS
+    AI_MODELS = load_ai_models()
+    return AI_MODELS
+
+# Initialize models on import
+if not AI_MODELS:
+    print("🔄 No AI models found. Run 'python ai_models/train_models.py' to train models.")
