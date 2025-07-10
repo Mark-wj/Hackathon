@@ -6,15 +6,6 @@ from app.utils.validators import validate_email, validate_password
 
 bp = Blueprint('auth', __name__)
 
-def get_dashboard_url(role):
-    """Get dashboard URL based on user role"""
-    role_urls = {
-        'job_seeker': '/',
-        'employer': '/employer',
-        'admin': '/admin'
-    }
-    return role_urls.get(role, '/')
-
 @bp.route('/register', methods=['POST'])
 def register():
     """Register a new user"""
@@ -54,15 +45,10 @@ def register():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
     
-    # Get redirect URL
-    redirect_url = get_dashboard_url(user.role)
-    
     return jsonify({
         'access_token': access_token,
         'refresh_token': refresh_token,
-        'user': user.to_dict(),
-        'redirect_url': redirect_url,
-        'message': f'Welcome! You have been registered as a {user.role.replace("_", " ").title()}.'
+        'user': user.to_dict()
     }), 201
 
 @bp.route('/login', methods=['POST'])
@@ -86,30 +72,10 @@ def login():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
     
-    # Get redirect URL
-    redirect_url = get_dashboard_url(user.role)
-    
     return jsonify({
         'access_token': access_token,
         'refresh_token': refresh_token,
-        'user': user.to_dict(),
-        'redirect_url': redirect_url,
-        'message': f'Welcome back, {user.first_name or user.email}!'
-    }), 200
-
-@bp.route('/me', methods=['GET'])
-@jwt_required()
-def get_current_user():
-    """Get current user information"""
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    
-    if not user:
-        return jsonify({'error': 'User not found'}), 404
-    
-    return jsonify({
-        'user': user.to_dict(),
-        'dashboard_url': get_dashboard_url(user.role)
+        'user': user.to_dict()
     }), 200
 
 @bp.route('/refresh', methods=['POST'])

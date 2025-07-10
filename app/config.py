@@ -6,8 +6,9 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-this'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        'postgresql://mark:spizzoH23.@localhost:5432/hackathon_db'
+    # e.g. app/config.py
+    SQLALCHEMY_DATABASE_URI = "sqlite:///hackathon.db"
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # JWT Configuration

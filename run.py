@@ -17,9 +17,11 @@ def make_shell_context():
         'MatchHistory': application.MatchHistory
     }
 
-if __name__ == '__main__':
-    # Create upload directory
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-    
-    # Run the app
-    app.run(debug=True, host='0.0.0.0', port=5000)
+if __name__ == "__main__":
+    # create all tables defined by your SQLAlchemy models
+    with app.app_context():
+        print("→ SQLALCHEMY_DATABASE_URI:", app.config["SQLALCHEMY_DATABASE_URI"])
+        db.create_all()
+
+    # then start the server
+    app.run(debug=True, host="0.0.0.0")
