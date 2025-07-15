@@ -106,14 +106,14 @@ def recent_activity():
     
     if user.role == 'job_seeker':
         # Recent applications
-        recent_apps = Application.query.filter_by(user_id=user.id).order_by(Application.created_at.desc()).limit(5).all()
+        recent_apps = Application.query.filter_by(user_id=user.id).order_by(Application.applied_at.desc()).limit(5).all()
         
         activities = []
         for app in recent_apps:
             activities.append({
                 'type': 'application',
                 'message': f'Applied to {app.job.title}',
-                'timestamp': app.created_at.isoformat(),
+                'timestamp': app.applied_at.isoformat() if app.applied_at else None,
                 'status': app.status
             })
         
@@ -192,7 +192,7 @@ def job_recommendations():
             'match_percentage': int(match_percentage),
             'salary_range': f"${job.salary_min}-${job.salary_max}" if job.salary_min and job.salary_max else None,
             'job_type': job.job_type,
-            'posted_date': job.created_at.isoformat()
+            'posted_date': job.posted_date.isoformat() if job.posted_date else None
         })
     
     return jsonify({'recommendations': recommendations})

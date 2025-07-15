@@ -105,6 +105,17 @@ def calculate_match_score_basic(user_profile, job):
     scores['overall'] = overall_score
     return scores
 
+def calculate_match_score(user_profile, job_data):
+    """
+    Main function that other modules expect to import
+    This is a wrapper that calls your existing AI logic
+    """
+    # Call your existing AI function
+    scores = calculate_match_score_ai(user_profile, job_data)
+    
+    # Return just the overall score (for compatibility with imports expecting a single score)
+    return scores.get('overall', 0.0)
+
 def match_user_to_jobs(user, jobs):
     """Match user to multiple jobs using AI"""
     if not user.profile:

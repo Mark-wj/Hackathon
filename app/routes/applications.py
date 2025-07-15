@@ -1,183 +1,196 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import db
-from app.models.application import Application
-from app.models.job import Job
 from app.models.user import User
+from app.models.job import Job
+from app.models.application import Application
+from app.services.job_matcher import calculate_match_score  # FIXED: This import should work now
 from app.services.content_generator import generate_cover_letter
-from app.services.email_service import send_application_confirmation
+from app import db
+from datetime import datetime
 
 bp = Blueprint('applications', __name__)
 
-@bp.route('/', methods=['POST'])
+@bp.route('/', methods=['GET'])
 @jwt_required()
-def create_application():
-    """Apply to a job"""
+def get_applications():
+    """Get user's job applications"""
     user_id = get_jwt_identity()
     user = User.query.get(user_id)
     
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    data = request.get_json()
-    job_id = data.get('job_id')
-    
-    if not job_id:
-        return jsonify({'error': 'job_id is required'}), 400
-    
-    job = Job.query.get(job_id)
-    if not job or not job.is_active:
-        return jsonify({'error': 'Job not found or inactive'}), 404
-    
-    # Check if already applied
-    existing = Application.query.filter_by(user_id=user_id, job_id=job_id).first()
-    if existing:
-        return jsonify({'error': 'Already applied to this job'}), 409
-    
-    # Generate cover letter if requested
-    cover_letter = data.get('cover_letter')
-    if data.get('generate_cover_letter'):
-        if user.profile:
-            cover_letter = generate_cover_letter(user, job)
-        else:
-            return jsonify({'error': 'Complete your profile to generate cover letter'}), 400
-    
-    # Create application
-    application = Application(
-        user_id=user_id,
-        job_id=job_id,
-        cover_letter=cover_letter,
-        status='pending'
-    )
-    
-    # Calculate match score
-    if user.profile and user.profile.skills:
-        from app.services.job_matcher import calculate_match_score
-        scores = calculate_match_score(user.profile.to_dict(), job.to_dict())
-        application.match_score = scores['overall']
-    
-    db.session.add(application)
-    db.session.commit()
-    
-    # Send confirmation email (will fail silently if email not configured)
     try:
-        send_application_confirmation(user.email, job.title, job.company.name)
-    except:
-        pass  # Email sending failed, but application was saved
-    
-    return jsonify({
-        'message': 'Application submitted successfully',
-        'application': application.to_dict()
-    }), 201
+        applications = user.applications.all()
+        
+        app_data = []
+        for app in applications:
+            app_dict = app.to_dict()
+            app_data.append(app_dict)
+        
+        return jsonify({
+            'applications': app_data,
+            'total': len(app_data)
+        }), 200
+    except Exception as e:
+        print(f"❌ Error getting applications: {str(e)}")
+        return jsonify({'error': 'Failed to retrieve applications'}), 500
 
-@bp.route('/', methods=['GET'])
+@bp.route('/', methods=['POST'])
 @jwt_required()
-def get_my_applications():
-    """Get current user's applications"""
+def create_application():
+    """Create a new job application"""
     user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     
-    # Get query parameters
-    status = request.args.get('status')
-    page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 10, type=int)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
     
-    # Build query
-    query = Application.query.filter_by(user_id=user_id)
-    if status:
-        query = query.filter_by(status=status)
+    if not user.profile:
+        return jsonify({'error': 'Please complete your profile first'}), 400
     
-    # Order by most recent first
-    query = query.order_by(Application.applied_at.desc())
-    
-    # Paginate
-    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    applications = [app.to_dict() for app in paginated.items]
-    
-    return jsonify({
-        'applications': applications,
-        'total': paginated.total,
-        'pages': paginated.pages,
-        'current_page': page
-    }), 200
+    try:
+        data = request.get_json()
+        job_id = data.get('job_id')
+        
+        if not job_id:
+            return jsonify({'error': 'job_id is required'}), 400
+        
+        job = Job.query.get(job_id)
+        if not job:
+            return jsonify({'error': 'Job not found'}), 404
+        
+        # Check if user already applied to this job
+        existing_app = Application.query.filter_by(
+            user_id=user_id, 
+            job_id=job_id
+        ).first()
+        
+        if existing_app:
+            return jsonify({'error': 'You have already applied to this job'}), 400
+        
+        # Calculate match score using the fixed function
+        try:
+            match_score = calculate_match_score(user.profile.to_dict(), job.to_dict())
+            print(f"✅ Calculated match score: {match_score}")
+        except Exception as e:
+            print(f"❌ Error calculating match score: {str(e)}")
+            match_score = 0.0  # Default score if calculation fails
+        
+        # Generate cover letter if requested
+        cover_letter = data.get('cover_letter', '')
+        if data.get('generate_cover_letter', False):
+            try:
+                cover_letter = generate_cover_letter(user, job)
+                print(f"✅ AI generated cover letter for {job.title}")
+            except Exception as e:
+                print(f"❌ Error generating cover letter: {str(e)}")
+                cover_letter = f"Dear Hiring Manager,\n\nI am writing to express my interest in the {job.title} position at {job.company.name if job.company else 'your company'}.\n\nBest regards,\n{user.first_name} {user.last_name}"
+        
+        # Create application
+        application = Application(
+            user_id=user_id,
+            job_id=job_id,
+            cover_letter=cover_letter,
+            match_score=match_score,
+            status='pending'
+        )
+        
+        db.session.add(application)
+        db.session.commit()
+        
+        print(f"✅ Application created successfully for job: {job.title}")
+        
+        return jsonify({
+            'message': 'Application submitted successfully',
+            'application': application.to_dict()
+        }), 201
+        
+    except Exception as e:
+        print(f"❌ Error creating application: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create application'}), 500
 
 @bp.route('/<int:application_id>', methods=['GET'])
 @jwt_required()
 def get_application(application_id):
-    """Get application details"""
+    """Get a specific application"""
     user_id = get_jwt_identity()
-    application = Application.query.get(application_id)
+    
+    application = Application.query.filter_by(
+        id=application_id,
+        user_id=user_id
+    ).first()
     
     if not application:
         return jsonify({'error': 'Application not found'}), 404
-    
-    # Check authorization
-    if application.user_id != user_id and application.job.posted_by != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
     
     return jsonify(application.to_dict()), 200
 
 @bp.route('/<int:application_id>', methods=['PUT'])
 @jwt_required()
 def update_application(application_id):
-    """Update application (withdraw or update status)"""
+    """Update an application (e.g., cover letter)"""
     user_id = get_jwt_identity()
-    application = Application.query.get(application_id)
+    
+    application = Application.query.filter_by(
+        id=application_id,
+        user_id=user_id
+    ).first()
     
     if not application:
         return jsonify({'error': 'Application not found'}), 404
     
-    data = request.get_json()
+    # Don't allow updates to submitted applications
+    if application.status != 'pending':
+        return jsonify({'error': 'Cannot update submitted application'}), 400
     
-    # Job seekers can only withdraw
-    if application.user_id == user_id:
-        if data.get('status') == 'withdrawn':
-            application.status = 'withdrawn'
-        else:
-            return jsonify({'error': 'Can only withdraw application'}), 400
-    
-    # Employers can update status
-    elif application.job.posted_by == user_id:
-        if 'status' in data:
-            valid_statuses = ['pending', 'reviewing', 'shortlisted', 'rejected', 'accepted']
-            if data['status'] in valid_statuses:
-                application.status = data['status']
-                # Send status update email
-                try:
-                    from app.services.email_service import send_status_update
-                    user = User.query.get(application.user_id)
-                    send_status_update(user.email, application.job.title, 
-                                     application.job.company.name, data['status'])
-                except:
-                    pass
-            else:
-                return jsonify({'error': f'Invalid status. Must be one of: {valid_statuses}'}), 400
-    else:
-        return jsonify({'error': 'Unauthorized'}), 403
-    
-    db.session.commit()
-    
-    return jsonify({
-        'message': 'Application updated successfully',
-        'application': application.to_dict()
-    }), 200
+    try:
+        data = request.get_json()
+        
+        if 'cover_letter' in data:
+            application.cover_letter = data['cover_letter']
+        
+        application.updated_at = datetime.utcnow()
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Application updated successfully',
+            'application': application.to_dict()
+        }), 200
+        
+    except Exception as e:
+        print(f"❌ Error updating application: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to update application'}), 500
 
-@bp.route('/status', methods=['GET'])
+@bp.route('/<int:application_id>', methods=['DELETE'])
 @jwt_required()
-def get_application_status():
-    """Get application status summary"""
+def delete_application(application_id):
+    """Delete an application"""
     user_id = get_jwt_identity()
     
-    # Get status counts
-    from sqlalchemy import func
-    status_counts = db.session.query(
-        Application.status,
-        func.count(Application.id)
-    ).filter_by(user_id=user_id).group_by(Application.status).all()
+    application = Application.query.filter_by(
+        id=application_id,
+        user_id=user_id
+    ).first()
     
-    status_summary = {status: count for status, count in status_counts}
+    if not application:
+        return jsonify({'error': 'Application not found'}), 404
     
-    return jsonify({
-        'status_summary': status_summary,
-        'total_applications': sum(status_summary.values())
-    }), 200
+    # Don't allow deletion of submitted applications
+    if application.status not in ['pending', 'draft']:
+        return jsonify({'error': 'Cannot delete submitted application'}), 400
+    
+    try:
+        db.session.delete(application)
+        db.session.commit()
+        
+        return jsonify({'message': 'Application deleted successfully'}), 200
+        
+    except Exception as e:
+        print(f"❌ Error deleting application: {str(e)}")
+        db.session.rollback()
+        return jsonify({'error': 'Failed to delete application'}), 500

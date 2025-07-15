@@ -6,6 +6,7 @@ from app.models.application import Application
 from app.services.job_matcher import find_best_matches, reload_ai_models
 from app.services.content_generator import generate_cover_letter, generate_interview_prep
 from app.services.resume_parser import extract_skills, parse_resume_text, parse_resume_file
+from app import db 
 import os
 
 bp = Blueprint('ai', __name__)
@@ -276,20 +277,28 @@ def get_match_history():
     if not user:
         return jsonify({'error': 'User not found'}), 404
     
-    # Get recent matches
-    matches = user.matches.order_by('created_at desc').limit(50).all()
-    
-    match_data = []
-    for match in matches:
-        match_dict = match.to_dict()
-        match_dict['ai_powered'] = True
-        match_data.append(match_dict)
-    
-    return jsonify({
-        'matches': match_data,
-        'total': len(match_data),
-        'ai_powered': True
-    }), 200
+    try:
+        # FIXED: Use proper SQLAlchemy query instead of trying to query on relationship
+        matches = db.session.query(MatchHistory).filter(
+            MatchHistory.user_id == user_id
+        ).order_by(MatchHistory.created_at.desc()).limit(50).all()
+        
+        match_data = []
+        for match in matches:
+            match_dict = match.to_dict()
+            match_dict['ai_powered'] = True
+            match_data.append(match_dict)
+        
+        return jsonify({
+            'matches': match_data,
+            'total': len(match_data),
+            'ai_powered': True
+        }), 200
+    except Exception as e:
+        print(f"❌ Error getting match history: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': 'Failed to retrieve match history'}), 500
 
 @bp.route('/reload-models', methods=['POST'])
 @jwt_required()
