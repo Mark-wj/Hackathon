@@ -232,6 +232,12 @@
             transform: translateY(0);
         }
 
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .btn-logout {
             background: linear-gradient(135deg, var(--danger-color), #dc2626);
         }
@@ -242,6 +248,10 @@
 
         .btn-success {
             background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
         }
 
         .job-card {
@@ -398,6 +408,12 @@
             border-left-color: var(--danger-color);
         }
 
+        .message.info {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-left-color: var(--primary-color);
+        }
+
         @keyframes slideIn {
             from { transform: translateX(-100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
@@ -409,9 +425,6 @@
             border-radius: var(--radius-lg);
             padding: 1.5rem;
             margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             transition: all 0.3s ease;
         }
 
@@ -520,13 +533,23 @@
             padding: 1.5rem;
             border-radius: var(--radius-lg);
             margin-bottom: 2rem;
-            display: flex;
-            gap: 1rem;
         }
 
-        .search-container input {
+        .search-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .search-controls input {
             flex: 1;
             margin-bottom: 0;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
         }
 
         .auth-container {
@@ -566,6 +589,140 @@
             color: var(--text-muted);
         }
 
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: var(--bg-primary);
+            margin: 2% auto;
+            padding: 0;
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .modal-header {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+            border-radius: var(--radius-md);
+        }
+
+        .close:hover {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination button {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+        }
+
+        .pagination button.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .analysis-result {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--radius-lg);
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.3s ease;
+        }
+
+        .job-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .job-actions button {
+            flex: 1;
+        }
+
+        .match-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .match-item {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .match-item h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .match-item .score {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -590,8 +747,12 @@
                 gap: 0.5rem;
             }
             
-            .search-container {
+            .search-controls {
                 flex-direction: column;
+            }
+            
+            .filters {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -720,6 +881,9 @@
                     <button class="tab" onclick="showAppTab('applications')">
                         <i class="fas fa-file-alt"></i> My Applications
                     </button>
+                    <button class="tab" onclick="showAppTab('matches')">
+                        <i class="fas fa-bullseye"></i> AI Matches
+                    </button>
                     <button class="tab" onclick="showAppTab('profile')">
                         <i class="fas fa-user-cog"></i> Profile
                     </button>
@@ -765,18 +929,61 @@
                     <h2 style="margin-bottom: 2rem;">
                         <i class="fas fa-search"></i> Browse Jobs
                     </h2>
+                    
                     <div class="search-container">
-                        <input type="text" id="searchQuery" placeholder="Search jobs by title, company, or keywords...">
-                        <button onclick="searchJobs()">
-                            <i class="fas fa-search"></i> Search
-                        </button>
+                        <div class="search-controls">
+                            <input type="text" id="searchQuery" placeholder="Search jobs by title, company, or keywords...">
+                            <button onclick="searchJobs()">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="form-group">
+                                <label>Location:</label>
+                                <input type="text" id="locationFilter" placeholder="Any location">
+                            </div>
+                            <div class="form-group">
+                                <label>Experience Level:</label>
+                                <select id="experienceFilter">
+                                    <option value="">Any level</option>
+                                    <option value="entry">Entry Level</option>
+                                    <option value="junior">Junior</option>
+                                    <option value="mid">Mid Level</option>
+                                    <option value="senior">Senior</option>
+                                    <option value="expert">Expert</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Job Type:</label>
+                                <select id="jobTypeFilter">
+                                    <option value="">Any type</option>
+                                    <option value="full-time">Full Time</option>
+                                    <option value="part-time">Part Time</option>
+                                    <option value="contract">Contract</option>
+                                    <option value="remote">Remote</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Sort by:</label>
+                                <select id="sortBy">
+                                    <option value="relevance">Relevance</option>
+                                    <option value="date">Date Posted</option>
+                                    <option value="salary">Salary</option>
+                                    <option value="match">Match Score</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
+
                     <div id="jobsList">
                         <div class="empty-state">
                             <i class="fas fa-briefcase"></i>
-                            <p>Loading jobs...</p>
+                            <p>Search for jobs to see results here</p>
                         </div>
                     </div>
+                    
+                    <div id="jobsPagination" class="pagination" style="display: none;"></div>
                 </div>
 
                 <!-- Applications Tab -->
@@ -784,13 +991,49 @@
                     <h2 style="margin-bottom: 2rem;">
                         <i class="fas fa-file-alt"></i> My Applications
                     </h2>
-                    <button onclick="loadApplications()" class="btn-secondary">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <button onclick="loadApplications()" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                        <select id="applicationStatusFilter" onchange="filterApplications()">
+                            <option value="">All Applications</option>
+                            <option value="pending">Pending</option>
+                            <option value="interview">Interview</option>
+                            <option value="accepted">Accepted</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                    </div>
+                    
                     <div id="applicationsList" style="margin-top: 2rem;">
                         <div class="empty-state">
                             <i class="fas fa-file-alt"></i>
                             <p>Loading applications...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Matches Tab -->
+                <div id="matchesTab" class="tab-content">
+                    <h2 style="margin-bottom: 2rem;">
+                        <i class="fas fa-bullseye"></i> AI Job Matches
+                    </h2>
+                    
+                    <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <button onclick="findAIMatches()" class="btn-success">
+                            <i class="fas fa-robot"></i> Find AI Matches
+                        </button>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label style="margin-bottom: 0;">Min Match Score:</label>
+                            <input type="range" id="minMatchScore" min="0" max="100" value="60" style="width: 150px;">
+                            <span id="matchScoreValue">60%</span>
+                        </div>
+                    </div>
+                    
+                    <div id="matchHistory">
+                        <div class="empty-state">
+                            <i class="fas fa-robot"></i>
+                            <p>Click "Find AI Matches" to see personalized job recommendations</p>
                         </div>
                     </div>
                 </div>
@@ -800,6 +1043,7 @@
                     <h2 style="margin-bottom: 2rem;">
                         <i class="fas fa-user-cog"></i> My Profile
                     </h2>
+                    
                     <form id="profileForm">
                         <div class="profile-grid">
                             <div class="form-group">
@@ -819,14 +1063,20 @@
                                 <input type="text" id="location" placeholder="e.g., Nairobi, Kenya">
                             </div>
                         </div>
+                        
                         <div class="form-group">
                             <label><i class="fas fa-file-text"></i> Professional Summary:</label>
                             <textarea id="summary" rows="3" placeholder="Brief summary of your professional background..."></textarea>
                         </div>
+                        
                         <div class="form-group">
                             <label><i class="fas fa-code"></i> Skills (comma separated):</label>
                             <input type="text" id="skills" placeholder="e.g., Python, Flask, PostgreSQL">
+                            <button type="button" onclick="extractSkillsFromText()" class="btn-secondary" style="margin-top: 0.5rem;">
+                                <i class="fas fa-robot"></i> Extract Skills from Summary
+                            </button>
                         </div>
+                        
                         <div class="profile-grid">
                             <div class="form-group">
                                 <label><i class="fas fa-calendar"></i> Years of Experience:</label>
@@ -837,10 +1087,12 @@
                                 <textarea id="education" rows="2" placeholder="e.g., Bachelor of Computer Science"></textarea>
                             </div>
                         </div>
+                        
                         <div class="form-group">
                             <label><i class="fas fa-briefcase"></i> Work Experience:</label>
                             <textarea id="workExperience" rows="4" placeholder="Describe your work experience..."></textarea>
                         </div>
+                        
                         <div class="profile-grid">
                             <div class="form-group">
                                 <label><i class="fab fa-linkedin"></i> LinkedIn URL:</label>
@@ -855,6 +1107,7 @@
                                 <input type="url" id="portfolioUrl" placeholder="https://yourportfolio.com">
                             </div>
                         </div>
+                        
                         <button type="submit" class="btn-success">
                             <i class="fas fa-save"></i> Update Profile
                         </button>
@@ -869,7 +1122,7 @@
                             </h3>
                             <input type="file" id="resumeFile" accept=".pdf,.doc,.docx" style="margin-bottom: 1rem;">
                             <button onclick="uploadResume()" class="btn-secondary">
-                                <i class="fas fa-upload"></i> Upload Resume
+                                <i class="fas fa-upload"></i> Upload & Parse Resume
                             </button>
                         </div>
                         <div>
@@ -888,26 +1141,60 @@
         </div>
     </div>
 
+    <!-- Job Details Modal -->
+    <div id="jobModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalJobTitle">Job Details</h2>
+                <button class="close" onclick="closeJobModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalJobBody">
+                <!-- Job details will be populated here -->
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Use dynamic origin for API calls
+        // Global variables
         const API_BASE_URL = window.location.origin;
         const API_BASE = `${API_BASE_URL}/api`;
         
         let authToken = localStorage.getItem('jwt_token') || localStorage.getItem('authToken');
         let currentUser = null;
+        let currentPage = 1;
+        let currentFilters = {};
+        let allApplications = [];
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', () => {
             checkAuthAndLoadDashboard();
             setupEventListeners();
+            setupRangeSlider();
         });
 
         function setupEventListeners() {
             document.getElementById('loginForm').addEventListener('submit', handleLogin);
             document.getElementById('registerForm').addEventListener('submit', handleRegister);
             document.getElementById('profileForm').addEventListener('submit', handleProfileUpdate);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
         }
 
+        function setupRangeSlider() {
+            const slider = document.getElementById('minMatchScore');
+            const value = document.getElementById('matchScoreValue');
+            
+            slider.addEventListener('input', (e) => {
+                value.textContent = e.target.value + '%';
+            });
+        }
+
+        // Authentication
         async function checkAuthAndLoadDashboard() {
             if (!authToken) {
                 showAuthSection();
@@ -932,6 +1219,7 @@
                     }
                     
                     showDashboard();
+                    await loadUserProfile();
                     loadDashboardData();
                 } else {
                     logout();
@@ -956,7 +1244,6 @@
             const fullName = `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim();
             document.getElementById('userName').textContent = fullName || currentUser.email;
             
-            // Set user avatar
             const initials = fullName ? fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 
                             currentUser.email[0].toUpperCase();
             document.getElementById('userAvatar').textContent = initials;
@@ -994,6 +1281,7 @@
                             window.location.href = data.redirect_url;
                         } else {
                             showDashboard();
+                            loadUserProfile();
                             loadDashboardData();
                         }
                     }, 1000);
@@ -1046,6 +1334,7 @@
                             window.location.href = data.redirect_url;
                         } else {
                             showDashboard();
+                            loadUserProfile();
                             loadDashboardData();
                         }
                     }, 1000);
@@ -1061,6 +1350,7 @@
             }
         }
 
+        // Dashboard Data Loading
         async function loadDashboardData() {
             await Promise.all([
                 loadDashboardStats(),
@@ -1079,8 +1369,8 @@
                     const data = await response.json();
                     const stats = data.stats;
                     
-                    document.getElementById('applicationsCount').textContent = stats.applications || 0;
-                    document.getElementById('pendingCount').textContent = stats.pending || 0;
+                    document.getElementById('applicationsCount').textContent = stats.total_applications || 0;
+                    document.getElementById('pendingCount').textContent = stats.pending_applications || 0;
                     document.getElementById('interviewsCount').textContent = stats.interviews || 0;
                     document.getElementById('profileCompleteness').textContent = (stats.profile_completeness || 0) + '%';
                 }
@@ -1135,15 +1425,21 @@
                         <span class="match-score">
                             <i class="fas fa-bullseye"></i> ${Math.round(job.match_score || 0)}% match
                         </span>
+                        ${job.is_remote ? '<span><i class="fas fa-home"></i> Remote</span>' : ''}
                     </div>
                     ${job.salary_min && job.salary_max ? `
                         <p style="color: var(--text-secondary); margin-top: 0.5rem;">
                             <i class="fas fa-dollar-sign"></i> ${job.salary_min} - ${job.salary_max}
                         </p>
                     ` : ''}
-                    <button class="apply-btn" onclick="applyToJob(${job.job_id})">
-                        <i class="fas fa-paper-plane"></i> Apply Now
-                    </button>
+                    <div class="job-actions">
+                        <button onclick="viewJobDetails(${job.job_id})" class="btn-secondary">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        <button class="apply-btn" onclick="applyToJob(${job.job_id})">
+                            <i class="fas fa-paper-plane"></i> Apply Now
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1194,6 +1490,276 @@
             `).join('');
         }
 
+        // Job Search Implementation
+        async function searchJobs() {
+            const query = document.getElementById('searchQuery').value;
+            const location = document.getElementById('locationFilter').value;
+            const experience = document.getElementById('experienceFilter').value;
+            const jobType = document.getElementById('jobTypeFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            currentFilters = { query, location, experience, jobType, sortBy };
+            
+            try {
+                const params = new URLSearchParams();
+                if (query) params.append('q', query);
+                if (location) params.append('location', location);
+                if (experience) params.append('experience', experience);
+                if (jobType) params.append('job_type', jobType);
+                if (sortBy) params.append('sort', sortBy);
+                params.append('page', currentPage);
+                
+                const response = await fetch(`${API_BASE}/jobs/search?${params}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayJobResults(data.jobs);
+                    updatePagination(data.pagination);
+                } else {
+                    showMessage('Error searching jobs', 'error');
+                }
+            } catch (error) {
+                console.error('Job search error:', error);
+                showMessage('Search failed. Please try again.', 'error');
+            }
+        }
+
+        function displayJobResults(jobs) {
+            const container = document.getElementById('jobsList');
+            
+            if (!jobs || jobs.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <p>No jobs found matching your criteria</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem;">Try adjusting your search filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = jobs.map(job => `
+                <div class="job-card" data-job-id="${job.id}">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <h4>${job.title}</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                <i class="fas fa-building"></i> ${job.company?.name || 'Company'}
+                            </p>
+                            <div class="job-meta">
+                                <span><i class="fas fa-map-marker-alt"></i> ${job.location}</span>
+                                <span><i class="fas fa-clock"></i> ${job.experience_level}</span>
+                                <span><i class="fas fa-briefcase"></i> ${job.job_type}</span>
+                                ${job.is_remote ? '<span><i class="fas fa-home"></i> Remote</span>' : ''}
+                                ${job.match_score ? `<span class="match-score"><i class="fas fa-bullseye"></i> ${Math.round(job.match_score)}% match</span>` : ''}
+                            </div>
+                            ${job.salary_min && job.salary_max ? `
+                                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                                    <i class="fas fa-dollar-sign"></i> ${job.salary_min} - ${job.salary_max}
+                                </p>
+                            ` : ''}
+                            <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                                ${job.description?.substring(0, 150)}...
+                            </p>
+                            ${job.skills_required ? `
+                                <div class="skills">
+                                    ${job.skills_required.slice(0, 5).map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="margin-left: 1rem;">
+                            <button onclick="viewJobDetails(${job.id})" class="btn-secondary">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                        </div>
+                    </div>
+                    <div class="job-actions">
+                        <button onclick="getJobMatchScore(${job.id})" class="btn-secondary">
+                            <i class="fas fa-bullseye"></i> Get Match Score
+                        </button>
+                        <button onclick="applyToJob(${job.id})" class="apply-btn">
+                            <i class="fas fa-paper-plane"></i> Apply Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updatePagination(pagination) {
+            const container = document.getElementById('jobsPagination');
+            
+            if (!pagination || pagination.total_pages <= 1) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'flex';
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <button onclick="changePage(${pagination.current_page - 1})" ${pagination.current_page === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+            `;
+            
+            // Page numbers
+            for (let i = Math.max(1, pagination.current_page - 2); i <= Math.min(pagination.total_pages, pagination.current_page + 2); i++) {
+                paginationHTML += `
+                    <button onclick="changePage(${i})" ${i === pagination.current_page ? 'class="active"' : ''}>
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <button onclick="changePage(${pagination.current_page + 1})" ${pagination.current_page === pagination.total_pages ? 'disabled' : ''}>
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            `;
+            
+            container.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            searchJobs();
+        }
+
+        // Job Details Modal
+        async function viewJobDetails(jobId) {
+            try {
+                const response = await fetch(`${API_BASE}/jobs/${jobId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const job = await response.json();
+                    displayJobModal(job);
+                } else {
+                    showMessage('Error loading job details', 'error');
+                }
+            } catch (error) {
+                console.error('Job details error:', error);
+                showMessage('Failed to load job details', 'error');
+            }
+        }
+
+        function displayJobModal(job) {
+            document.getElementById('modalJobTitle').textContent = job.title;
+            
+            const modalBody = document.getElementById('modalJobBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Job Information</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <p><strong>Company:</strong> ${job.company?.name || 'N/A'}</p>
+                        <p><strong>Location:</strong> ${job.location}</p>
+                        <p><strong>Experience Level:</strong> ${job.experience_level}</p>
+                        <p><strong>Job Type:</strong> ${job.job_type}</p>
+                        <p><strong>Remote:</strong> ${job.is_remote ? 'Yes' : 'No'}</p>
+                        <p><strong>Posted:</strong> ${new Date(job.posted_date).toLocaleDateString()}</p>
+                    </div>
+                    ${job.salary_min && job.salary_max ? `
+                        <p style="margin-top: 1rem;"><strong>Salary:</strong> ${job.salary_min} - ${job.salary_max}</p>
+                    ` : ''}
+                </div>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Job Description</h3>
+                    <p style="line-height: 1.6;">${job.description}</p>
+                </div>
+                
+                ${job.requirements ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Requirements</h3>
+                        <p style="line-height: 1.6;">${job.requirements}</p>
+                    </div>
+                ` : ''}
+                
+                ${job.skills_required ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Required Skills</h3>
+                        <div class="skills">
+                            ${job.skills_required.map(skill => `<span class="skill-tag">${skill}</span>`).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button onclick="getJobMatchScore(${job.id})" class="btn-secondary">
+                        <i class="fas fa-bullseye"></i> Get Match Score
+                    </button>
+                    <button onclick="applyToJob(${job.id})" class="apply-btn">
+                        <i class="fas fa-paper-plane"></i> Apply Now
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('jobModal').style.display = 'block';
+        }
+
+        function closeJobModal() {
+            document.getElementById('jobModal').style.display = 'none';
+        }
+
+        // Job Matching
+        async function getJobMatchScore(jobId) {
+            try {
+                const response = await fetch(`${API_BASE}/jobs/${jobId}/match`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayMatchScore(data);
+                } else {
+                    showMessage('Error calculating match score', 'error');
+                }
+            } catch (error) {
+                console.error('Match score error:', error);
+                showMessage('Failed to calculate match score', 'error');
+            }
+        }
+
+        function displayMatchScore(matchData) {
+            const modal = document.getElementById('jobModal');
+            const existingScore = modal.querySelector('.match-breakdown');
+            
+            if (existingScore) {
+                existingScore.remove();
+            }
+            
+            const matchHTML = `
+                <div class="match-breakdown">
+                    <div class="match-item">
+                        <h4>Overall Match</h4>
+                        <div class="score">${Math.round(matchData.overall || 0)}%</div>
+                    </div>
+                    <div class="match-item">
+                        <h4>Skills Match</h4>
+                        <div class="score">${Math.round(matchData.skill_match || 0)}%</div>
+                    </div>
+                    <div class="match-item">
+                        <h4>Experience Match</h4>
+                        <div class="score">${Math.round(matchData.experience_match || 0)}%</div>
+                    </div>
+                    <div class="match-item">
+                        <h4>Location Match</h4>
+                        <div class="score">${Math.round(matchData.location_match || 0)}%</div>
+                    </div>
+                </div>
+            `;
+            
+            const modalBody = document.getElementById('modalJobBody');
+            modalBody.insertAdjacentHTML('beforeend', matchHTML);
+        }
+
+        // Application Management
         async function applyToJob(jobId) {
             try {
                 const response = await fetch(`${API_BASE}/applications/`, {
@@ -1213,6 +1779,7 @@
                 if (response.ok) {
                     showMessage('Application submitted successfully!', 'success');
                     loadDashboardData();
+                    closeJobModal();
                 } else {
                     showMessage(data.error, 'error');
                 }
@@ -1220,6 +1787,397 @@
                 console.error('Application error:', error);
                 showMessage('Application failed. Please try again.', 'error');
             }
+        }
+
+        async function loadApplications() {
+            try {
+                const response = await fetch(`${API_BASE}/applications/`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    allApplications = data.applications;
+                    displayApplications(allApplications);
+                } else {
+                    showMessage('Error loading applications', 'error');
+                }
+            } catch (error) {
+                console.error('Applications loading error:', error);
+                showMessage('Failed to load applications', 'error');
+            }
+        }
+
+        function displayApplications(applications) {
+            const container = document.getElementById('applicationsList');
+            
+            if (!applications || applications.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No applications found</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem;">Start applying to jobs to see them here</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = applications.map(app => `
+                <div class="application-card">
+                    <div style="flex: 1;">
+                        <h4>${app.job?.title || 'Job Title'}</h4>
+                        <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                            <i class="fas fa-building"></i> ${app.job?.company?.name || 'Company'}
+                        </p>
+                        <div class="job-meta">
+                            <span><i class="fas fa-calendar"></i> Applied: ${new Date(app.applied_at).toLocaleDateString()}</span>
+                            ${app.match_score ? `<span class="match-score"><i class="fas fa-bullseye"></i> ${Math.round(app.match_score)}% match</span>` : ''}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                        <span class="status-badge status-${app.status}">${app.status}</span>
+                        <button onclick="viewApplication(${app.id})" class="btn-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterApplications() {
+            const statusFilter = document.getElementById('applicationStatusFilter').value;
+            
+            if (!statusFilter) {
+                displayApplications(allApplications);
+                return;
+            }
+            
+            const filtered = allApplications.filter(app => app.status === statusFilter);
+            displayApplications(filtered);
+        }
+
+        async function viewApplication(applicationId) {
+            try {
+                const response = await fetch(`${API_BASE}/applications/${applicationId}`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const app = await response.json();
+                    displayApplicationModal(app);
+                } else {
+                    showMessage('Error loading application details', 'error');
+                }
+            } catch (error) {
+                console.error('Application details error:', error);
+                showMessage('Failed to load application details', 'error');
+            }
+        }
+
+        function displayApplicationModal(app) {
+            document.getElementById('modalJobTitle').textContent = `Application - ${app.job?.title || 'Job'}`;
+            
+            const modalBody = document.getElementById('modalJobBody');
+            modalBody.innerHTML = `
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Application Status</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <p><strong>Status:</strong> <span class="status-badge status-${app.status}">${app.status}</span></p>
+                        <p><strong>Applied Date:</strong> ${new Date(app.applied_at).toLocaleDateString()}</p>
+                        <p><strong>Match Score:</strong> ${app.match_score ? Math.round(app.match_score) + '%' : 'N/A'}</p>
+                        <p><strong>Last Updated:</strong> ${new Date(app.updated_at).toLocaleDateString()}</p>
+                    </div>
+                </div>
+                
+                ${app.cover_letter ? `
+                    <div style="margin-bottom: 2rem;">
+                        <h3 style="margin-bottom: 1rem;">Cover Letter</h3>
+                        <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); white-space: pre-wrap;">
+                            ${app.cover_letter}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem;">Job Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <p><strong>Company:</strong> ${app.job?.company?.name || 'N/A'}</p>
+                        <p><strong>Location:</strong> ${app.job?.location || 'N/A'}</p>
+                        <p><strong>Job Type:</strong> ${app.job?.job_type || 'N/A'}</p>
+                        <p><strong>Experience Level:</strong> ${app.job?.experience_level || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('jobModal').style.display = 'block';
+        }
+
+        // AI Features
+        async function findAIMatches() {
+            const minScore = document.getElementById('minMatchScore').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/match-jobs`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ min_match_score: parseInt(minScore) })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayAIMatches(data.matches);
+                } else {
+                    const error = await response.json();
+                    showMessage(error.error || 'Error finding AI matches', 'error');
+                }
+            } catch (error) {
+                console.error('AI matches error:', error);
+                showMessage('Failed to find AI matches', 'error');
+            }
+        }
+
+        function displayAIMatches(matches) {
+            const container = document.getElementById('matchHistory');
+            
+            if (!matches || matches.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-robot"></i>
+                        <p>No AI matches found</p>
+                        <p style="font-size: 0.875rem; margin-top: 0.5rem;">Try lowering the minimum match score or complete your profile</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = matches.map(match => `
+                <div class="job-card">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <h4>${match.job.title}</h4>
+                            <p style="color: var(--text-secondary); margin-bottom: 0.5rem;">
+                                <i class="fas fa-building"></i> ${match.job.company?.name || 'Company'}
+                            </p>
+                            <div class="job-meta">
+                                <span><i class="fas fa-map-marker-alt"></i> ${match.job.location}</span>
+                                <span class="match-score">
+                                    <i class="fas fa-bullseye"></i> ${Math.round(match.scores.overall)}% match
+                                </span>
+                            </div>
+                            <div class="match-breakdown">
+                                <div class="match-item">
+                                    <h4>Skills</h4>
+                                    <div class="score">${Math.round(match.scores.skill_match)}%</div>
+                                </div>
+                                <div class="match-item">
+                                    <h4>Experience</h4>
+                                    <div class="score">${Math.round(match.scores.experience_match)}%</div>
+                                </div>
+                                <div class="match-item">
+                                    <h4>Location</h4>
+                                    <div class="score">${Math.round(match.scores.location_match)}%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="job-actions">
+                        <button onclick="viewJobDetails(${match.job.id})" class="btn-secondary">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        <button onclick="applyToJob(${match.job.id})" class="apply-btn">
+                            <i class="fas fa-paper-plane"></i> Apply Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function analyzeProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/ai/analyze-profile`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayProfileAnalysis(data);
+                } else {
+                    showMessage('Error analyzing profile', 'error');
+                }
+            } catch (error) {
+                console.error('Profile analysis error:', error);
+                showMessage('Failed to analyze profile', 'error');
+            }
+        }
+
+        function displayProfileAnalysis(analysis) {
+            const container = document.getElementById('profileAnalysis');
+            
+            container.innerHTML = `
+                <div class="analysis-result">
+                    <h3 style="margin-bottom: 1rem;">
+                        <i class="fas fa-chart-line"></i> Profile Analysis Results
+                    </h3>
+                    
+                    <div style="margin-bottom: 2rem;">
+                        <h4>Profile Completeness: ${analysis.profile_completeness}%</h4>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${analysis.profile_completeness}%"></div>
+                        </div>
+                    </div>
+                    
+                    ${analysis.missing_fields && analysis.missing_fields.length > 0 ? `
+                        <div style="margin-bottom: 2rem;">
+                            <h4>Missing Fields:</h4>
+                            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                ${analysis.missing_fields.map(field => `<li>${field.replace('_', ' ').toUpperCase()}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${analysis.suggestions && analysis.suggestions.length > 0 ? `
+                        <div>
+                            <h4>AI Suggestions:</h4>
+                            <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                                ${analysis.suggestions.map(suggestion => `<li>${suggestion}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        async function extractSkillsFromText() {
+            const summaryText = document.getElementById('summary').value;
+            const experienceText = document.getElementById('workExperience').value;
+            const text = summaryText + ' ' + experienceText;
+            
+            if (!text.trim()) {
+                showMessage('Please add a summary or work experience first', 'info');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/extract-skills`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const currentSkills = document.getElementById('skills').value;
+                    const newSkills = data.skills.join(', ');
+                    
+                    if (currentSkills) {
+                        document.getElementById('skills').value = currentSkills + ', ' + newSkills;
+                    } else {
+                        document.getElementById('skills').value = newSkills;
+                    }
+                    
+                    showMessage(`Extracted ${data.skills.length} skills from your text`, 'success');
+                } else {
+                    showMessage('Error extracting skills', 'error');
+                }
+            } catch (error) {
+                console.error('Skill extraction error:', error);
+                showMessage('Failed to extract skills', 'error');
+            }
+        }
+
+        async function uploadResume() {
+            const fileInput = document.getElementById('resumeFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showMessage('Please select a resume file', 'info');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch(`${API_BASE}/ai/parse-resume`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    populateProfileFromResume(data);
+                    showMessage('Resume parsed successfully! Profile updated.', 'success');
+                } else {
+                    showMessage('Error parsing resume', 'error');
+                }
+            } catch (error) {
+                console.error('Resume upload error:', error);
+                showMessage('Failed to upload resume', 'error');
+            }
+        }
+
+        function populateProfileFromResume(resumeData) {
+            if (resumeData.skills) {
+                document.getElementById('skills').value = resumeData.skills.join(', ');
+            }
+            
+            if (resumeData.summary) {
+                document.getElementById('summary').value = resumeData.summary;
+            }
+            
+            if (resumeData.education && resumeData.education.length > 0) {
+                document.getElementById('education').value = resumeData.education.join('\n');
+            }
+            
+            if (resumeData.experience && resumeData.experience.length > 0) {
+                document.getElementById('workExperience').value = resumeData.experience.join('\n');
+            }
+            
+            if (resumeData.contact) {
+                if (resumeData.contact.phone) {
+                    document.getElementById('phone').value = resumeData.contact.phone;
+                }
+            }
+        }
+
+        // Profile Management
+        async function loadUserProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/users/profile`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+
+                if (response.ok) {
+                    const profile = await response.json();
+                    populateProfileForm(profile);
+                }
+            } catch (error) {
+                console.error('Profile loading error:', error);
+            }
+        }
+
+        function populateProfileForm(profile) {
+            document.getElementById('profileFirstName').value = profile.first_name || '';
+            document.getElementById('profileLastName').value = profile.last_name || '';
+            document.getElementById('phone').value = profile.phone || '';
+            document.getElementById('location').value = profile.location || '';
+            document.getElementById('summary').value = profile.summary || '';
+            document.getElementById('skills').value = profile.skills ? profile.skills.join(', ') : '';
+            document.getElementById('experienceYears').value = profile.experience_years || '';
+            document.getElementById('education').value = profile.education || '';
+            document.getElementById('workExperience').value = profile.work_experience || '';
+            document.getElementById('linkedinUrl').value = profile.linkedin_url || '';
+            document.getElementById('githubUrl').value = profile.github_url || '';
+            document.getElementById('portfolioUrl').value = profile.portfolio_url || '';
         }
 
         async function handleProfileUpdate(event) {
@@ -1270,6 +2228,7 @@
             }
         }
 
+        // Utility Functions
         function showTab(tabName) {
             document.querySelectorAll('#authSection .tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('#authSection .tab-content').forEach(content => content.classList.remove('active'));
@@ -1284,12 +2243,17 @@
             
             event.target.classList.add('active');
             document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Load data for specific tabs
+            if (tabName === 'applications') {
+                loadApplications();
+            }
         }
 
         function showMessage(message, type) {
             const messageDiv = document.getElementById('message');
             messageDiv.innerHTML = `<div class="message ${type}">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i>
                 ${message}
             </div>`;
             
@@ -1306,22 +2270,20 @@
             showAuthSection();
         }
 
-        // Placeholder functions for additional features
-        async function searchJobs() {
-            // Implementation for job search
-        }
-
-        async function loadApplications() {
-            // Implementation for loading applications
-        }
-
-        async function analyzeProfile() {
-            // Implementation for AI profile analysis
-        }
-
-        async function uploadResume() {
-            // Implementation for resume upload
-        }
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto-search jobs when filters change
+            document.getElementById('searchQuery').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchJobs();
+                }
+            });
+            
+            // Auto-load applications when tab is shown
+            document.querySelector('[onclick="showAppTab(\'applications\')"]').addEventListener('click', () => {
+                setTimeout(loadApplications, 100);
+            });
+        });
     </script>
 </body>
 </html>
